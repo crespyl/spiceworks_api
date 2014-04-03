@@ -1,4 +1,4 @@
-SPICEWORKS UNOFFICIAL EXTERNAL API
+##SPICEWORKS UNOFFICIAL EXTERNAL API
 This is a small script to authenticate a user to Spiceworks and then fetch some
 JSON API data from their Internal JSON API
 
@@ -10,14 +10,40 @@ http://mediarealm.com.au/articles/2013/01/spiceworks-external-json-api-getting-s
 
 Caution: This may break in the future if Spiceworks changes the way they authenticate.
 
+###Usage
+```php
+$url    = "https://spiceworks.example.com/";
+$email  = "spiceworks-reporter@spiceworks.example.com";
+$passwd = "passwd";
+
+$cookiejar = "./cookies.txt";
+
+$spiceworks = new Spiceworks($url, $email, $passwd, $cookiejar);
+
+$report_json = $spiceworks->getURL("reports/show/{{ID of some report}}.json");
+
+$report = json_decode($report_json, true);
+
+var_dump($report);
+
+```
+
+Bear in mind that the `cookies.txt` file needs to be both readable and writeable by your server process, and the account you use to log in must have permission to access whatever urls you request.
+
+In my own use-case, I created a "reports" user in Spiceworks and gave them access to a handful of reports that can generate the data I need.  You can get the url of the report data file by logging in as your reporting user and visitng that report; the url in your browser should be something like `https://spiceworks.example.com/reports/show/42`.  If the report has a graph widget associated with it, you may be able to log an AJAX request to `https://spiceworks.example.com/reports/show/42.xml`.  Note that the xml url is NOT preceded by any references to `/api/` or similar.  You can simply exchange the `xml` extension with `json` or `csv` according to your needs.
+
+
+####Notices and Stuffs
+
 Version: 2
+
 Copyright (c) 2014, Ambassador Enterprises http://ambassador-enterprises.com/
 
 Original Version Copyright (c) 2012, Media Realm http://mediarealm.com.au/
+
 Based on source from https://github.com/anthonyeden/spiceworks_api
 
 All rights reserved.
-
 
 
 ------------------------------------------------------------------------------------------
