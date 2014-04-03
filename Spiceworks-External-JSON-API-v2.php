@@ -141,6 +141,8 @@ class Spiceworks {
 
 		// although this is a POST request this time, vars are already attached to the url
 		curl_setopt($curl, CURLOPT_POST, true);
+		// Explicitly set POSTFILEDS to 0, since we aren't sending anything in the request body
+		curl_setopt($curl, CURLOPT_POSTFIELDS, 0);
 
 		if(self::DEBUG) {
 			curl_setopt($curl, CURLOPT_VERBOSE, true);
