@@ -10,9 +10,12 @@ http://mediarealm.com.au/articles/2013/01/spiceworks-external-json-api-getting-s
 
 Caution: This may break in the future if Spiceworks changes the way they authenticate.
 
-Version: 1
+Version: 2
+Copyright (c) 2014, Ambassador Enterprises http://ambassador-enterprises.com/
 
-Copyright (c) 2012-2013, Media Realm http://mediarealm.com.au/
+Original Version Copyright (c) 2012, Media Realm http://mediarealm.com.au/
+Based on source from https://github.com/anthonyeden/spiceworks_api
+
 All rights reserved.
 
 
