@@ -62,7 +62,7 @@ class Spiceworks {
 
 	protected $logged_in;
 
-	public function __construct($url, $userEmail, $userPassword, $cookie_file) {
+	public function __construct($url, $userEmail, $userPassword, $cookie_file, $nossl = false) {
 		// url should have a trailing slash
 		$this->url_root    = $url;
 		$this->cookie_file = $cookie_file;
@@ -80,9 +80,14 @@ class Spiceworks {
 		$curl = curl_init($this->url_root . 'login');
 
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_HEADER, true);
+		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_COOKIESESSION, true);        // start with a blank session (no cookies)
 		curl_setopt($curl, CURLOPT_COOKIEJAR, $this->cookie_file);     // save cookies to the cookiejar
+
+		if($nossl) {
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+		}
 
 		if(self::DEBUG) {
 			curl_setopt($curl, CURLOPT_VERBOSE, true);
@@ -92,11 +97,17 @@ class Spiceworks {
 		$response = curl_exec($curl);
 		curl_close($curl);
 
-		//Using two explode functions to get the authenticity_token from the page:
-		$token = explode('<input name="authenticity_token" type="hidden" value="', $response);
-		$token = explode('"', $token['1']);
+		$dom = new DOMDocument();
+		// suppress invalid html errors
+		libxml_use_internal_errors(true);
 
-		$token = $token['0'];
+		// load result into a DomDocument for querying auth token
+		$result = $dom->loadHTML($response);
+
+		// select the value attribute of the input element named 'authenticity_token'
+		$finder = new DOMXPath($dom);
+		$attr = $finder->query('//input[@name="authenticity_token"]/@value')->item(0);
+		$token = $attr->value;
 
 		if(self::DEBUG) {
 			fwrite($this->debug_log, "\nReceived Authenticity Token: " . $token . "\n");;
@@ -110,14 +121,13 @@ class Spiceworks {
 
 		$fields_string = http_build_query(array('authenticity_token' => $token,
 		                                        '_pickaxe' => self::PICKAXE,
-		                                        'user' => array('email' => $this->user_email,
-		                                                        'password' => $this->user_password))
+		                                        'pro_user' => array('email' => $this->user_email,
+		                                                            'password' => $this->user_password))
 		                                  );
 
 		if(self::DEBUG) {
 			fwrite($this->debug_log, "Prepared Query String: " . $fields_string . "\n");
 		}
-
 
 		/* The original version of this script posted directly
 		 * to the login url, and passed the vars in the request
@@ -141,8 +151,14 @@ class Spiceworks {
 
 		// although this is a POST request this time, vars are already attached to the url
 		curl_setopt($curl, CURLOPT_POST, true);
+
 		// Explicitly set POSTFILEDS to 0, since we aren't sending anything in the request body
 		curl_setopt($curl, CURLOPT_POSTFIELDS, 0);
+
+		if($nossl) {
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+		}
 
 		if(self::DEBUG) {
 			curl_setopt($curl, CURLOPT_VERBOSE, true);
@@ -170,6 +186,7 @@ class Spiceworks {
 
 		if($status === 302) {
 			// all has gone well and we now have valid session cookies in the jar
+			fwrite($this->debug_log, "\nLogged in successfully!\n\n");
 			$this->logged_in = true;
 		}
 	}
@@ -190,6 +207,8 @@ class Spiceworks {
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_COOKIEFILE, $this->cookie_file);
 		curl_setopt($curl, CURLOPT_COOKIEJAR, $this->cookie_file);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
 
 		if(self::DEBUG) {
 			curl_setopt($curl, CURLOPT_VERBOSE, true);
